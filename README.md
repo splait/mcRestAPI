@@ -10,11 +10,11 @@ http://mobilecenter.microfocus.com/api/
 Detailed info: https://admhelp.microfocus.com/mobilecenter/en/latest/Content/REST_API.HTM
 
 Usage:
-- replace the relevant constants:
-<SERVER>: Mobile Center FQDN or IP address
-<USER>: Mobile Center Username
-<PASSWORD>: Mobile Center PASSWORD
-<PROXY>: in case the client behind proxy, specify proxy address
-<APP>: full path to mobile app to be uploaded to Mobile Center (IPA or APK file)
+replace the relevant constants in the code:
+ - SERVER: Mobile Center FQDN or IP address
+- USER: Mobile Center Username
+- PASSWORD: Mobile Center PASSWORD
+- PROXY: in case the client behind proxy, specify proxy address
+- APP: full path to mobile app to be uploaded to Mobile Center (IPA or APK file)
 
 Please see "main" for the examples of API calls.

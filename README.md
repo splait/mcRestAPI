@@ -10,7 +10,7 @@ http://mobilecenter.microfocus.com/api/
 Detailed info: https://admhelp.microfocus.com/mobilecenter/en/latest/Content/REST_API.HTM
 
 Usage:
-replace the relevant constants in the code and build the code
+Download the archive, replace the relevant constants in the code and build the code using maven
  - SERVER: Mobile Center FQDN or IP address
 - USER: Mobile Center Username
 - PASSWORD: Mobile Center PASSWORD

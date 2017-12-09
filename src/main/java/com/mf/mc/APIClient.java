@@ -14,9 +14,17 @@ import java.util.concurrent.TimeUnit;
 
 public class APIClient {
 
+    // *************************************
+    // Initiate the constants with your data
+    // *************************************
+
     private static String BASE_URL = "http://<SERVER>:8080/rest/";
     private static String username = "<USER>";
     private static String password = "<PASSWORD>";
+
+    // ************************************
+    // Mobile Center APIs end-points
+    // ************************************
 
     private static String ENDPOINT_CLIENT_LOGIN = "client/login";
     private static String ENDPOINT_CLIENT_LOGOUT = "client/logout";
@@ -24,19 +32,29 @@ public class APIClient {
     private static String ENDPOINT_CLIENT_APPS = "apps";
     private static String ENDPOINT_CLIENT_USERS = "v2/users";
 
+    // ************************************
+    // Initiate proxy configuration
+    // ************************************
+
     private static boolean USE_PROXY = false;
     private static String PROXY = "<PROXY>";
-    private static int PROXY_PORT = 8080;
 
-    private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-    private static final MediaType APK = MediaType.parse("application/vnd.android.package-archive");
-
+    // ************************************
+    // Path to app (IPA or APK) for upload
+    // ************************************
 
     private static String APP = "/PATH/TO/APP/FILE.ipa|apk";
 
     private OkHttpClient client;
     private String hp4msecret;
     private String jsessionid;
+
+    private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+    private static final MediaType APK = MediaType.parse("application/vnd.android.package-archive");
+
+    // ******************************************************
+    // APIClient class constructor to store all info and call API methods
+    // ******************************************************
 
     private APIClient(String username, String password) throws IOException {
         OkHttpClient.Builder clientBuilder = new OkHttpClient.Builder()
@@ -70,12 +88,17 @@ public class APIClient {
                 });
 
         if (USE_PROXY) {
+            int PROXY_PORT = 8080;
             clientBuilder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(PROXY, PROXY_PORT)));
         }
 
         client = clientBuilder.build();
         login(username, password);
     }
+
+    // ***********************************************************
+    // Login to Mobile Center for getting cookies to work with API
+    // ***********************************************************
 
     private void login(String username, String password) throws IOException {
 
@@ -99,6 +122,10 @@ public class APIClient {
 
     }
 
+    // ************************************
+    // List all apps from Mobile Center
+    // ************************************
+
     private void apps() throws IOException {
 
         Request request = new Request.Builder()
@@ -118,6 +145,10 @@ public class APIClient {
 
     }
 
+    // ************************************
+    // List all users from Mobile Center
+    // ************************************
+
     private void users() throws IOException {
 
         Request request = new Request.Builder()
@@ -136,6 +167,10 @@ public class APIClient {
         }
 
     }
+
+    // ************************************
+    // List all devices from Mobile Center
+    // ************************************
 
     private void deviceContent() throws IOException {
 
@@ -157,6 +192,10 @@ public class APIClient {
 
     }
 
+    // ************************************
+    // Logout from Mobile Center
+    // ************************************
+
     private void logout() throws IOException {
         RequestBody body = RequestBody.create(JSON, "");
         Request request = new Request.Builder()
@@ -176,6 +215,10 @@ public class APIClient {
         }
 
     }
+
+    // ************************************
+    // Upload Application to Mobile Center
+    // ************************************
 
     private void uploadApp(String filename) throws IOException {
         String[] parts = filename.split("\\\\");
@@ -206,6 +249,10 @@ public class APIClient {
         }
 
     }
+
+    // ************************************
+    // main
+    // ************************************
 
     public static void main(String[] args) throws IOException {
         try{

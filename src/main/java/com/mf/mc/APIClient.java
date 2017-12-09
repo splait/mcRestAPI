@@ -26,23 +26,24 @@ public class APIClient {
     // Mobile Center APIs end-points
     // ************************************
 
-    private static String ENDPOINT_CLIENT_LOGIN = "client/login";
-    private static String ENDPOINT_CLIENT_LOGOUT = "client/logout";
-    private static String ENDPOINT_CLIENT_DEVICES = "deviceContent";
-    private static String ENDPOINT_CLIENT_APPS = "apps";
-    private static String ENDPOINT_CLIENT_USERS = "v2/users";
+    private static final String ENDPOINT_CLIENT_LOGIN = "client/login";
+    private static final String ENDPOINT_CLIENT_LOGOUT = "client/logout";
+    private static final String ENDPOINT_CLIENT_DEVICES = "deviceContent";
+    private static final String ENDPOINT_CLIENT_APPS = "apps";
+    private static final String ENDPOINT_CLIENT_USERS = "v2/users";
 
     // ************************************
     // Initiate proxy configuration
     // ************************************
 
-    private static boolean USE_PROXY = false;
-    private static String PROXY = "<PROXY>";
+    private static final boolean USE_PROXY = false;
+    private static final String PROXY = "<PROXY>";
 
     // ************************************
     // Path to app (IPA or APK) for upload
     // ************************************
 
+    @SuppressWarnings("unused")
     private static String APP = "/PATH/TO/APP/FILE.ipa|apk";
 
     private OkHttpClient client;
@@ -83,7 +84,7 @@ public class APIClient {
                     @Override
                     public List<Cookie> loadForRequest(HttpUrl url) {
                         List<Cookie> cookies = cookieStore.get(url.host());
-                        return cookies != null ? cookies : new ArrayList<Cookie>();
+                        return cookies != null ? cookies : new ArrayList<>();
                     }
                 });
 
@@ -103,22 +104,8 @@ public class APIClient {
     private void login(String username, String password) throws IOException {
 
         String strCredentials = "{\"name\":\"" + username + "\",\"password\":\"" + password + "\"}";
-
         RequestBody body = RequestBody.create(JSON, strCredentials);
-        Request request = new Request.Builder()
-                .url(BASE_URL + ENDPOINT_CLIENT_LOGIN)
-                .post(body)
-                .addHeader("Content-type", JSON.toString())
-                .addHeader("Accept", JSON.toString())
-                .build();
-        try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful()) {
-                System.out.println(response.body().string());
-            } else {
-                throw new IOException("Unexpected code " + response);
-            }
-            response.close();
-        }
+        executeRestAPI(ENDPOINT_CLIENT_LOGIN, HttpMethod.POST, body);
 
     }
 
@@ -127,44 +114,16 @@ public class APIClient {
     // ************************************
 
     private void apps() throws IOException {
-
-        Request request = new Request.Builder()
-                .url(BASE_URL + ENDPOINT_CLIENT_APPS)
-                .get()
-                .addHeader("Content-type", JSON.toString())
-                .addHeader("Accept", JSON.toString())
-                .build();
-        try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful()) {
-                System.out.println(response.body().string());
-            } else {
-                throw new IOException("Unexpected code " + response);
-            }
-            response.close();
-        }
-
+        executeRestAPI(ENDPOINT_CLIENT_APPS);
     }
+
 
     // ************************************
     // List all users from Mobile Center
     // ************************************
 
     private void users() throws IOException {
-
-        Request request = new Request.Builder()
-                .url(BASE_URL + ENDPOINT_CLIENT_USERS)
-                .get()
-                .addHeader("Content-type", JSON.toString())
-                .addHeader("Accept", JSON.toString())
-                .build();
-        try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful()) {
-                System.out.println(response.body().string());
-            } else {
-                throw new IOException("Unexpected code " + response);
-            }
-            response.close();
-        }
+        executeRestAPI(ENDPOINT_CLIENT_USERS);
 
     }
 
@@ -173,24 +132,9 @@ public class APIClient {
     // ************************************
 
     private void deviceContent() throws IOException {
-
-        Request request = new Request.Builder()
-                .url(BASE_URL + ENDPOINT_CLIENT_DEVICES)
-                .get()
-                .addHeader("Content-type", JSON.toString())
-                .addHeader("Accept", JSON.toString())
-                .build();
-        try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful()) {
-                System.out.println(response.body().string());
-            } else {
-                throw new IOException("Unexpected code " + response);
-            }
-            response.close();
-
-        }
-
+        executeRestAPI(ENDPOINT_CLIENT_DEVICES);
     }
+
 
     // ************************************
     // Logout from Mobile Center
@@ -198,28 +142,55 @@ public class APIClient {
 
     private void logout() throws IOException {
         RequestBody body = RequestBody.create(JSON, "");
-        Request request = new Request.Builder()
-                .url(BASE_URL + ENDPOINT_CLIENT_LOGOUT)
-                .post(body)
+        executeRestAPI(ENDPOINT_CLIENT_LOGOUT, HttpMethod.POST, body);
+    }
+
+    private void executeRestAPI(String endpoint) throws IOException {
+        executeRestAPI(endpoint, HttpMethod.GET);
+    }
+
+    private void executeRestAPI(String endpoint, HttpMethod httpMethod) throws IOException {
+        executeRestAPI(endpoint, httpMethod, null);
+    }
+
+    private void executeRestAPI(String endpoint, HttpMethod httpMethod, RequestBody body) throws IOException {
+
+        // build the request URL and headers
+        Request.Builder builder = new Request.Builder()
+                .url(BASE_URL + endpoint)
                 .addHeader("Content-type", JSON.toString())
-                .addHeader("Accept", JSON.toString())
-                .build();
+                .addHeader("Accept", JSON.toString());
+
+        // build the http method
+        if (HttpMethod.GET.equals(httpMethod)) {
+            builder.get();
+        } else
+        if (HttpMethod.POST.equals(httpMethod)) {
+            builder.post(body);
+        }
+
+        Request request = builder.build();
+        System.out.println("\n" + request);
+
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful()) {
-                System.out.println(response.body().string());
+                System.out.println(response.toString());
+                final ResponseBody responseBody = response.body();
+                if (responseBody != null) {
+                    System.out.println("Body: " + responseBody.string());
+                }
             } else {
                 throw new IOException("Unexpected code " + response);
             }
             response.close();
-
         }
-
     }
 
     // ************************************
     // Upload Application to Mobile Center
     // ************************************
 
+    @SuppressWarnings("unused")
     private void uploadApp(String filename) throws IOException {
         String[] parts = filename.split("\\\\");
         System.out.println("Uploading and preparing the app... ");
@@ -240,7 +211,7 @@ public class APIClient {
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful()) {
                 System.out.println("Done!");
-                System.out.println(response.body().string());
+                System.out.println(response.toString());
             } else {
                 throw new IOException("Unexpected code " + response);
             }
@@ -257,14 +228,19 @@ public class APIClient {
     public static void main(String[] args) throws IOException {
         try{
             APIClient client = new APIClient(username, password);
-            //client.deviceContent();
-            //client.apps();
+            client.deviceContent();
+            client.apps();
             //client.uploadApp(APP);
             client.users();
             client.logout();
         } catch (Exception e) {
             System.out.println("Something went wrong: " + e.toString());
         }
+    }
+
+    private enum HttpMethod {
+        GET,
+        POST
     }
 
 }

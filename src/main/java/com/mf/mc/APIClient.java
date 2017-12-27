@@ -30,6 +30,7 @@ public class APIClient {
     private static final String ENDPOINT_CLIENT_LOGOUT = "client/logout";
     private static final String ENDPOINT_CLIENT_DEVICES = "deviceContent";
     private static final String ENDPOINT_CLIENT_APPS = "apps";
+    private static final String ENDPOINT_CLIENT_UPLOAD_APPS = "apps/upload?enforceUpload=true";
     private static final String ENDPOINT_CLIENT_USERS = "v2/users";
 
     // ************************************
@@ -204,7 +205,7 @@ public class APIClient {
                 .addHeader("content-type", "multipart/form-data")
                 .addHeader("x-hp4msecret", hp4msecret)
                 .addHeader("JSESSIONID", jsessionid)
-                .url(BASE_URL + ENDPOINT_CLIENT_APPS)
+                .url(BASE_URL + ENDPOINT_CLIENT_UPLOAD_APPS)
                 .post(requestBody)
                 .build();
 
@@ -212,6 +213,10 @@ public class APIClient {
             if (response.isSuccessful()) {
                 System.out.println("Done!");
                 System.out.println(response.toString());
+                ResponseBody body = response.body();
+                if (body != null) {
+                    System.out.println(body.string());
+                }
             } else {
                 throw new IOException("Unexpected code " + response);
             }
@@ -230,7 +235,7 @@ public class APIClient {
             APIClient client = new APIClient(username, password);
             client.deviceContent();
             client.apps();
-            //client.uploadApp(APP);
+            client.uploadApp(APP);
             client.users();
             client.logout();
         } catch (Exception e) {

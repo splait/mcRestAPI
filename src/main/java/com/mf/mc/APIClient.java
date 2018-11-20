@@ -30,6 +30,7 @@ public class APIClient {
     private static final String ENDPOINT_CLIENT_LOGOUT = "client/logout";
     private static final String ENDPOINT_CLIENT_DEVICES = "deviceContent";
     private static final String ENDPOINT_CLIENT_APPS = "apps";
+    private static final String ENDPOINT_CLIENT_INSTALL_APPS = "apps/install";
     private static final String ENDPOINT_CLIENT_UPLOAD_APPS = "apps/upload?enforceUpload=true";
     private static final String ENDPOINT_CLIENT_USERS = "v2/users";
 
@@ -50,6 +51,7 @@ public class APIClient {
     private OkHttpClient client;
     private String hp4msecret;
     private String jsessionid;
+    private String responseBodyStr;
 
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType APK = MediaType.parse("application/vnd.android.package-archive");
@@ -74,7 +76,7 @@ public class APIClient {
                             cookieStore.put(url.host(), storedCookies);
                         }
                         storedCookies.addAll(cookies);
-                        for (Cookie cookie: cookies) {
+                        for (Cookie cookie : cookies) {
                             if (cookie.name().equals("hp4msecret"))
                                 hp4msecret = cookie.value();
                             if (cookie.name().equals("JSESSIONID"))
@@ -136,6 +138,41 @@ public class APIClient {
         executeRestAPI(ENDPOINT_CLIENT_DEVICES);
     }
 
+    // ************************************
+    // Install application
+    // ************************************
+
+    private void installApp(String package_name, String version, String device_id, Boolean is_intrumented) throws IOException {
+        String counter = version;
+        String str = "{\n" +
+                "  \"app\": {\n" +
+                "    \"counter\": " + counter + ",\n" +
+                "    \"id\": \"" + package_name + "\",\n" +
+                "    \"instrumented\": " + (is_intrumented ? "true" : "false") + "\n" +
+                "  },\n" +
+                "  \"deviceCapabilities\": {\n" +
+                "    \"udid\": \"" + device_id + "\"\n" +
+                "  }\n" +
+                "}";
+        RequestBody body = RequestBody.create(JSON, str);
+        executeRestAPI(ENDPOINT_CLIENT_INSTALL_APPS, HttpMethod.POST, body);
+    }
+
+    // ************************************
+    // Install application by file name, when there are multiple matches for file name in database, will select first application.
+    // ************************************
+
+    private void installAppByFileAndDeviceID(String filename, String device_id, Boolean is_intrumented) throws IOException {
+        apps();
+        String[] res = responseBodyStr.split(filename);
+        if (res == null || res.length < 2) {
+            return;
+        } else {
+            String counter = parseProperty(res[0], "\"counter\":", ",");
+            String package_name = parseProperty(res[1], "\"identifier\":\"", "\",");
+            installApp(package_name, counter, device_id, is_intrumented);
+        }
+    }
 
     // ************************************
     // Logout from Mobile Center
@@ -162,11 +199,15 @@ public class APIClient {
                 .addHeader("Content-type", JSON.toString())
                 .addHeader("Accept", JSON.toString());
 
+        // add CRSF header
+        if (hp4msecret != null) {
+            builder.addHeader("x-hp4msecret", hp4msecret);
+        }
+
         // build the http method
         if (HttpMethod.GET.equals(httpMethod)) {
             builder.get();
-        } else
-        if (HttpMethod.POST.equals(httpMethod)) {
+        } else if (HttpMethod.POST.equals(httpMethod)) {
             builder.post(body);
         }
 
@@ -178,7 +219,8 @@ public class APIClient {
                 System.out.println(response.toString());
                 final ResponseBody responseBody = response.body();
                 if (responseBody != null) {
-                    System.out.println("Body: " + responseBody.string());
+                    responseBodyStr = responseBody.string();
+                    System.out.println("Body: " + responseBodyStr);
                 }
             } else {
                 throw new IOException("Unexpected code " + response);
@@ -231,13 +273,14 @@ public class APIClient {
     // ************************************
 
     public static void main(String[] args) throws IOException {
-        try{
+        try {
             APIClient client = new APIClient(username, password);
             client.deviceContent();
-            client.apps();
-            client.uploadApp(APP);
-            client.users();
-            client.logout();
+//            client.installAppByFileAndDeviceID("AdvantageShoppingInstrumented.apk", "058530e7", true);
+//            client.apps();
+//            client.uploadApp(APP);
+//            client.users();
+//            client.logout();
         } catch (Exception e) {
             System.out.println("Something went wrong: " + e.toString());
         }
@@ -248,4 +291,14 @@ public class APIClient {
         POST
     }
 
+    private String parseProperty(String source, String prefix, String suffix) {
+        try {
+            String[] array = source.split(prefix);
+            String str = array[array.length - 1];
+            return str.split(suffix)[0];
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

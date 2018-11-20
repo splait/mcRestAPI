@@ -144,7 +144,6 @@ public class APIClient {
 
     private void installApp(String package_name, String version, String device_id, Boolean is_intrumented) throws IOException {
         String counter = version;
-//        package_name = "com.Advantage.aShopping";
         String str = "{\n" +
                 "  \"app\": {\n" +
                 "    \"counter\": " + counter + ",\n" +
@@ -294,7 +293,8 @@ public class APIClient {
 
     private String parseProperty(String source, String prefix, String suffix) {
         try {
-            String str = source.split(prefix)[1];
+            String[] array = source.split(prefix);
+            String str = array[array.length - 1];
             return str.split(suffix)[0];
         } catch (Exception e) {
             e.printStackTrace();
